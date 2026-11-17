@@ -129,7 +129,7 @@ function home(){
   const all=S.done.every(Boolean);
   $app.innerHTML=`<header class="hero"><div class="brand">ENGLISH QUEST 영어 탐험대 · GRADE 5 · LESSON ${D.lesson}</div><h1>${esc(D.title)}</h1><p class="sub">${esc(D.sub)}</p></header>
   <main class="wrap"><h2>세 관문을 차례로 통과하세요</h2><div class="gates">${D.gates.map((g,i)=>{
-    const open=S.unlocked[i]||!g.pw;const st=S.done[i]?'<span class="st done">완료 ✓</span>':open?'<span class="st">입장하기 ›</span>':'<span class="st">🔒 암호</span>';
+    const open=S.unlocked[i]||(!g.pw&&(i===0||S.done[i-1]));const st=S.done[i]?'<span class="st done">완료 ✓</span>':open?'<span class="st">입장하기 ›</span>':`<span class="st">🔒 ${g.pw?'암호':'잠김'}</span>`;
     return `<button class="gate ${open?'':'locked'}" style="--gc:${g.color}" onclick="openGate(${i})"><span class="ic">${g.icon}</span><span class="tx"><span class="no">관문 ${i+1}</span><span class="nm">${esc(g.name)}</span><span class="ac">${g.acts.map(a=>esc(a.title)).join(' → ')}</span></span>${st}</button>`;}).join('')}</div>
   ${all?`<button class="big" onclick="cert()">🏆 ${esc(D.certTitle)} 받기</button>`:''}
   <button class="ghost" onclick="askReset()">처음부터 다시 하기</button></main>`;
@@ -140,7 +140,8 @@ function askReset(){const m=modal(`<h3>처음부터 다시?</h3><p>통과한 관
   m.querySelector('#no').onclick=()=>m.remove();m.querySelector('#yes').onclick=()=>{S={unlocked:[false,false,false],done:[false,false,false],name:''};save();m.remove();home();};}
 function openGate(i){
   const g=D.gates[i];
-  if(S.unlocked[i]||!g.pw){startGate(i);return;}
+  if(S.unlocked[i]){startGate(i);return;}
+  if(!g.pw){if(i>0&&!S.done[i-1]){const m=modal(`<div style="font-size:52px">🔒</div><h3>아직 잠겨 있어요</h3><p>관문 ${i} ${esc(D.gates[i-1].name)}을(를) 먼저 통과하면 열려요!</p><div class="row" style="justify-content:center"><button class="btn" id="cl">확인</button></div>`);m.querySelector('#cl').onclick=()=>m.remove();return;}startGate(i);return;}
   const m=modal(`<div style="font-size:52px">${g.icon}</div><h3>관문 ${i+1} · ${esc(g.name)}</h3><p>관문 입구예요. 암호를 입력하세요!</p><input class="inp" id="pw" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="암호 입력"><div class="fb" id="pwfb"></div><div class="row" style="justify-content:center"><button class="btn sub" id="cl">닫기</button><button class="btn" id="go">열기</button></div>`);
   const inp=m.querySelector('#pw'),fb=m.querySelector('#pwfb');
   const go=()=>{if(inp.value.trim().toLowerCase().replace(/\s/g,'')===g.pw){S.unlocked[i]=true;save();m.remove();startGate(i);}else{fb.className='fb no';fb.textContent='암호가 맞지 않아요. 다시 확인해 보세요.';inp.classList.remove('shake');void inp.offsetWidth;inp.classList.add('shake');}};
